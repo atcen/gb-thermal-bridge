@@ -5,13 +5,18 @@
 #include <Thermal_Printer.h>
 
 // Demo config
+// SD card wiring (SPI):
+// SD_CS   -> CS/SS
+// SD_SCK  -> SCK
+// SD_MOSI -> MOSI
+// SD_MISO -> MISO
 #define SD_CS   15
 #define SD_SCK  14
 #define SD_MOSI 13
 #define SD_MISO 26
 
-#define THERMAL_PRINTER_NAME ""     // e.g. "GB01"; leave empty for auto
-#define THERMAL_PRINTER_MAC  ""     // optional MAC override
+#define THERMAL_PRINTER_NAME ""
+#define THERMAL_PRINTER_MAC  ""
 #define THERMAL_SCAN_SECONDS 5
 #define THERMAL_ENERGY       12000  // 1-65535, 0 to skip
 #define THERMAL_THRESHOLD    160    // 0-255, lower = darker
