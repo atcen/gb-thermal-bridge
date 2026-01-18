@@ -7,6 +7,9 @@ const char nibbleToCharLUT[] = "0123456789ABCDEF";
 byte img_tmp[6000] = {}; // 1GBC Picute (5.874)
 
 TaskHandle_t TaskWriteDump;
+#if !USE_SD_STORAGE
+void gbp_process_raw_dump(const byte *data, size_t len);
+#endif
 /*******************************************************************************
   Recieve Raw Data from GameBoy
 *******************************************************************************/
@@ -93,7 +96,6 @@ inline void gbp_packet_capture_loop() {
         #endif 
         if (chkHeader == 2 && !isWriting) {
           memcpy(img_tmp,image_data,6000);
-          memset(image_data, 0x00, sizeof(image_data)); 
           isWriting=true;
           if((chkMargin == 0 || ((chkMargin == 3 && dtpck == 1) || (chkMargin == 1 && dtpck == 1) || (chkMargin == 1 && dtpck == 6))) && !setMultiPrint){
             setMultiPrint=true;
@@ -101,6 +103,8 @@ inline void gbp_packet_capture_loop() {
           }else if(chkMargin > 0 && setMultiPrint){
             setMultiPrint=false;
           }
+#if USE_SD_STORAGE
+          memset(image_data, 0x00, sizeof(image_data));
           xTaskCreatePinnedToCore(storeData,        // Task function. 
                                   "storeData",      // name of task. 
                                   10000,            // Stack size of task 
@@ -108,6 +112,15 @@ inline void gbp_packet_capture_loop() {
                                   1,                // priority of the task 
                                   &TaskWriteDump,   // Task handle to keep track of created task 
                                   0);               // pin task to core 0 
+#else
+          gbp_process_raw_dump(img_tmp, img_index);
+          memset(image_data, 0x00, sizeof(image_data));
+          img_index = 0x00;
+          isWriting = false;
+          isPrinting = false;
+          setMultiPrint = false;
+          totalMultiImages = 1;
+#endif
           dtpck = 0x00;         
         }
         #ifdef DEBUG_SERIAL
@@ -129,6 +142,7 @@ inline void gbp_packet_capture_loop() {
 /*******************************************************************************
   Write HEX dump file
 *******************************************************************************/
+#if USE_SD_STORAGE
 void storeData(void *pvParameters) {
   unsigned long perf = millis();
   int img_index2=img_index;
@@ -179,6 +193,7 @@ void storeData(void *pvParameters) {
   }
   vTaskDelete(NULL);
 }
+#endif
 
 /*******************************************************************************
   Force to call the next file 

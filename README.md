@@ -29,6 +29,10 @@ This repo merges the NeoGB-Printer firmware with the Thermal_Printer driver libr
 
 Enable BLE thermal printing by uncommenting the `ENABLE_THERMAL_PRINTER` block in `firmware/NeoGB_Printer/config.h` and setting the BLE name or MAC address. The firmware will convert the temporary 24-bit BMP into a 1-bit buffer and send it to the printer when each Game Boy print is converted.
 
+## SD card usage
+
+By default (`USE_SD_STORAGE=0`), the firmware runs without an SD card and streams Game Boy packets directly to the thermal printer. Set `USE_SD_STORAGE=1` if you want dumps, BMP/PNG output, and the web server features.
+
 ## Licensing
 
 - This project is GPL-3.0 (see `LICENSE`).

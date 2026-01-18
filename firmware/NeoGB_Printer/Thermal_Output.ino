@@ -4,6 +4,7 @@
 
 #include <FS.h>
 #include <Thermal_Printer.h>
+#include "./includes/gblink/gbp_tiles.h"
 
 #ifndef THERMAL_PRINTER_NAME
 #define THERMAL_PRINTER_NAME ""
@@ -28,6 +29,10 @@
 #endif
 #ifndef THERMAL_FEED_LINES
 #define THERMAL_FEED_LINES 0
+#endif
+
+#ifndef USE_SD_STORAGE
+#define USE_SD_STORAGE 0
 #endif
 
 static bool thermal_printer_connect()
@@ -196,5 +201,76 @@ bool thermal_print_bmp(const char *bmpPath)
 
   return true;
 }
+
+#if !USE_SD_STORAGE
+static uint8_t thermal_tone_to_luma(uint8_t tone)
+{
+  static const uint8_t toneMap[4] = {255, 170, 85, 0};
+  return toneMap[tone & 0x03];
+}
+
+bool thermal_print_tiles(const gbp_tile_t *gbp_tiles)
+{
+  if (!thermal_printer_connect()) {
+    Serial.println("Thermal printer: not connected");
+    return false;
+  }
+
+  const int imageWidth = GBP_TILE_PIXEL_WIDTH * GBP_TILES_PER_LINE;
+  const int imageHeight = (int)(gbp_tiles->tileRowOffset * GBP_TILE_PIXEL_HEIGHT);
+  if (imageHeight <= 0) {
+    return false;
+  }
+
+  int printerWidth = THERMAL_PRINTER_WIDTH;
+  if (printerWidth <= 0) {
+    printerWidth = tpGetWidth();
+  }
+  if (printerWidth <= 0) {
+    printerWidth = imageWidth;
+  }
+
+  int xOffset = 0;
+#ifdef THERMAL_CENTER_OUTPUT
+  if (printerWidth > imageWidth) {
+    xOffset = (printerWidth - imageWidth) / 2;
+  }
+#endif
+
+  const int pitch = (printerWidth + 7) / 8;
+  size_t bufferSize = (size_t)pitch * (size_t)imageHeight;
+  uint8_t *backBuffer = (uint8_t *)calloc(1, bufferSize);
+  if (!backBuffer) {
+    Serial.println("Thermal printer: buffer alloc failed");
+    return false;
+  }
+
+  tpSetBackBuffer(backBuffer, printerWidth, imageHeight);
+
+  for (int y = 0; y < imageHeight; y++) {
+    for (int x = 0; x < imageWidth; x++) {
+      uint8_t packed = gbp_tiles->bmpLineBuffer[y][GBP_TILE_2BIT_LINEPACK_INDEX(x)];
+      uint8_t tone = (packed >> GBP_TILE_2BIT_LINEPACK_BITOFFSET(x)) & 0x03;
+      uint8_t lum = thermal_tone_to_luma(tone);
+      bool pixelOn = (lum < THERMAL_THRESHOLD);
+      if (THERMAL_INVERT) {
+        pixelOn = !pixelOn;
+      }
+      int outX = x + xOffset;
+      if (pixelOn && outX >= 0 && outX < printerWidth) {
+        backBuffer[y * pitch + (outX >> 3)] |= (uint8_t)(0x80 >> (outX & 7));
+      }
+    }
+  }
+
+  tpPrintBuffer();
+  if (THERMAL_FEED_LINES > 0) {
+    tpFeed(THERMAL_FEED_LINES);
+  }
+
+  free(backBuffer);
+  return true;
+}
+#endif
 
 #endif // ENABLE_THERMAL_PRINTER

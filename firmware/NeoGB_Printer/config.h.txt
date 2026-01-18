@@ -14,6 +14,9 @@
 /*****************************
  * SD CARD MODULE DEFINITIONS 
  *****************************/
+// Set to 1 to enable SD storage and web server features.
+// Default is 0 (no SD), stream Game Boy data directly to the thermal printer.
+#define USE_SD_STORAGE 0
 //Define the SD Card Module Pins
 #define SD_CS   15
 #define SD_SCK  14

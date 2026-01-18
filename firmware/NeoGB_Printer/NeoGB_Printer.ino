@@ -26,6 +26,10 @@
 
 #define numVersion "Ver. 1.6.13"
 
+#ifndef USE_SD_STORAGE
+#define USE_SD_STORAGE 0
+#endif
+
 /*******************************************************************************
  * Invert the SO and SI pins if necessary 
 *******************************************************************************/
@@ -172,9 +176,14 @@ void setup(void){
   delay(500); //Little delay for stetic 
 
   //Initialize FileSystem
+#if USE_SD_STORAGE
   isFileSystemMounted = fs_setup();
+#else
+  isFileSystemMounted = true;
+#endif
   
   if(isFileSystemMounted){
+#if USE_SD_STORAGE
     ID_file_checker(); //Create/check controller file
     setupImages(); //Get the Image Scale Factors from config file
     
@@ -193,6 +202,9 @@ void setup(void){
       full();
       delay(5000);
     }
+#else
+    bootAsPrinter = true;
+#endif
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //    Serial.println("Checking for dumps to convert...");
@@ -218,8 +230,13 @@ void setup(void){
       Serial.println("Booting in printer mode");
       Serial.println("-----------------------");
       
+#if USE_SD_STORAGE
       freeFileIndex = get_next_ID();
       dumpCount = get_dumps();
+#else
+      freeFileIndex = 0;
+      dumpCount = 0;
+#endif
   
       /* Pins from gameboy link cable */
       pinMode(GBP_SC_PIN, INPUT);
@@ -242,18 +259,26 @@ void setup(void){
   
       #ifdef USE_OLED
         oledStateChange(1); //Printer Idle
-        GetNumberFiles();
+        #if USE_SD_STORAGE
+          GetNumberFiles();
+        #endif
       #endif
       setCpuFrequencyMhz(80); //Force CPU Frequency to 80MHz instead the default 240MHz. This fix protocol issue with some games.
       #ifdef ENABLE_RTC
         oledStateChange(12); //Seeking for date/time
         initWifi(); //Initiate WiFi and NTP
         oledStateChange(1); //Printer Idle
-        GetNumberFiles();
+        #if USE_SD_STORAGE
+          GetNumberFiles();
+        #endif
       #endif
     }
     #ifdef ENABLE_WEBSERVER
       else{
+        #if !USE_SD_STORAGE
+        Serial.println("Webserver disabled: USE_SD_STORAGE=0");
+        bootAsPrinter = true;
+        #else
         initWifi(); //Initiate WiFi and NTP
         Serial.println("-----------------------");
         Serial.println("Booting in server mode");
@@ -281,6 +306,7 @@ void setup(void){
         #ifdef USE_OLED
           oledStateChange(9); //Printer Idle as Server
           oled_ShowIP();
+        #endif
         #endif
       }
     #endif
@@ -354,6 +380,7 @@ void loop(){
             longPressActive = true;
             //Long press to convert to Image Files
             //if (!isConverting && !isPrinting && (freeFileIndex-1) > 0 && dumpCount > 0){
+#if USE_SD_STORAGE
             if (!isConverting && (freeFileIndex-1) > 0 && dumpCount > 0){
               Serial.println("Converting to Image File");
               isConverting = true;
@@ -379,6 +406,7 @@ void loop(){
                 GetNumberFiles();
               #endif     
             }
+#endif
           }  
         }else{
           if (buttonActive == true) {
@@ -386,6 +414,7 @@ void loop(){
               longPressActive = false;  
             } else {
               delay(500);
+#if USE_SD_STORAGE
               if((totalMultiImages-1) > 1 && chkMargin == 0 && isPrinting){
                 Serial.println("Getting next file ID");
                 
@@ -416,6 +445,7 @@ void loop(){
                 #endif  
                 
               }
+#endif
             }  
             buttonActive = false;  
           }  

@@ -13,6 +13,18 @@ gbp_bmp_t  gbp_bmp = {0};
 static void gbpdecoder_gotByte(const uint8_t bytgb);
 #ifdef ENABLE_THERMAL_PRINTER
 bool thermal_print_bmp(const char *bmpPath);
+#if !USE_SD_STORAGE
+bool thermal_print_tiles(const gbp_tile_t *gbp_tiles);
+#endif
+#endif
+
+#if !USE_SD_STORAGE
+void gbp_process_raw_dump(const byte *data, size_t len)
+{
+  for (size_t i = 0; i < len; i++) {
+    gbpdecoder_gotByte((uint8_t)data[i]);
+  }
+}
 #endif
 
 File fileBMP;
@@ -271,6 +283,7 @@ void gbpdecoder_gotByte(const uint8_t bytgb){
             gbp_pktbuff[GBP_PRINT_INSTRUCT_INDEX_PALETTE_VALUE],
             gbp_pktbuff[GBP_PRINT_INSTRUCT_INDEX_PRINT_DENSITY]);
             
+#if USE_SD_STORAGE
         // Streaming BMP Writer
         // Dev Note: Done this way to allow for streaming writes to file without a large buffer
   
@@ -341,6 +354,12 @@ void gbpdecoder_gotByte(const uint8_t bytgb){
           fileBMP.close();          
 
         }
+#else
+        #ifdef ENABLE_THERMAL_PRINTER
+        thermal_print_tiles(&gbp_tiles);
+        #endif
+        gbp_tiles_reset(&gbp_tiles);
+#endif
       }
     }else{
       // Support compression payload
