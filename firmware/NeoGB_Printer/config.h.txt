@@ -78,3 +78,17 @@
 #define ENABLE_RTC
 #define RTC_TIMEZONE -3 //Define your timezone
 #define RTC_TIMEDIFF 0 //Define the time difference between the NTP server and the real time
+
+/*********************************
+ * THERMAL PRINTER OUTPUT (BLE)
+ *********************************/
+//#define ENABLE_THERMAL_PRINTER
+//#define THERMAL_PRINTER_NAME "GB01" // BLE advertised name (leave empty for auto)
+//#define THERMAL_PRINTER_MAC "" // Optional MAC address override
+//#define THERMAL_SCAN_SECONDS 5
+//#define THERMAL_ENERGY 12000 // 1-65535, 0 to skip setting
+//#define THERMAL_THRESHOLD 160 // 0-255, lower = darker
+//#define THERMAL_INVERT 0 // 0 = normal, 1 = invert
+//#define THERMAL_CENTER_OUTPUT
+//#define THERMAL_PRINTER_WIDTH 0 // 0 = auto from printer
+//#define THERMAL_FEED_LINES 4

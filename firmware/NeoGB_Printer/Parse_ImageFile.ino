@@ -11,6 +11,9 @@ gbp_tile_t gbp_tiles = {0};
 gbp_bmp_t  gbp_bmp = {0};
 
 static void gbpdecoder_gotByte(const uint8_t bytgb);
+#ifdef ENABLE_THERMAL_PRINTER
+bool thermal_print_bmp(const char *bmpPath);
+#endif
 
 File fileBMP;
 char fileBMPPath[30];
@@ -61,6 +64,9 @@ void ConvertFilesBMP(){
       sprintf(pathOutput, "/output/png/%05d.png", 0);
       png_upscaler(fileBMPPath,pathOutput,scalePNG);
     }
+#ifdef ENABLE_THERMAL_PRINTER
+    thermal_print_bmp(fileBMPPath);
+#endif
     FSYS.remove(fileBMPPath);             
     testmode = false;
   }
@@ -198,7 +204,10 @@ void ConvertFilesBMP(){
         LED_blink(LED_STATUS_BLUE,1,100,50);
       #endif
     }
-    
+#ifdef ENABLE_THERMAL_PRINTER
+    thermal_print_bmp(fileBMPPath);
+#endif
+
     FSYS.remove(fileBMPPath);
     Serial.printf("\n");
 

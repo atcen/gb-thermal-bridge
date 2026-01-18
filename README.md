@@ -25,6 +25,10 @@ This repo merges the NeoGB-Printer firmware with the Thermal_Printer driver libr
 4) Configure pins and options in `firmware/NeoGB_Printer/config.h`.
 5) Build/flash for your ESP32 target.
 
+## Thermal printer output (BLE)
+
+Enable BLE thermal printing by uncommenting the `ENABLE_THERMAL_PRINTER` block in `firmware/NeoGB_Printer/config.h` and setting the BLE name or MAC address. The firmware will convert the temporary 24-bit BMP into a 1-bit buffer and send it to the printer when each Game Boy print is converted.
+
 ## Licensing
 
 - This project is GPL-3.0 (see `LICENSE`).
